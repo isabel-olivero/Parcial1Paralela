@@ -166,28 +166,25 @@ public:
     }
     
 
-    void aplicarBlur() {
-        int* nuevos_pixels = new int[pixel_count];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                for (int c = 0; c < channels; c++) {
-                    int index = (y * width + x) * channels + c;
-                    nuevos_pixels[index] = aplicarKernel(x, y, blurKernel, blurDiv, c);
-                }
-            }
-        }
-        
-        delete[] pixels;
-        pixels = nuevos_pixels;
-    }
 
-    void aplicarLaplace() {
+    void aplicar(int n) {
         int* nuevos_pixels = new int[pixel_count];
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 for (int c = 0; c < channels; c++) {
                     int index = (y * width + x) * channels + c;
+
+                    if (n == 1){
+                    nuevos_pixels[index] = aplicarKernel(x, y, blurKernel, blurDiv, c);
+                    }
+                    else if (n == 2){
                     nuevos_pixels[index] = aplicarKernel(x, y, laplaceKernel, laplaceDiv, c);
+                    }
+
+                    else if (n == 3){
+                    nuevos_pixels[index] = aplicarKernel(x, y, sharpenKernel, sharpenDiv, c);
+                    }
+
                 }
             }
         }
@@ -195,20 +192,7 @@ public:
         delete[] pixels;
         pixels = nuevos_pixels;
     }
-    
-    void aplicarSharpening() {
-        int* nuevos_pixels = new int[pixel_count];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                for (int c = 0; c < channels; c++) {
-                    int index = (y * width + x) * channels + c;
-                    nuevos_pixels[index] = aplicarKernel(x, y, sharpenKernel, sharpenDiv, c);
-                }
-            }
-        }
-        delete[] pixels;
-        pixels = nuevos_pixels;
-    }
+   
 };
 
 int main(int argc, char* argv[]) {
@@ -219,13 +203,13 @@ int main(int argc, char* argv[]) {
     const char* filtro = argv[3];
     
     if (strcmp(filtro, "blur") == 0) {
-        imagen.aplicarBlur();
+        imagen.aplicar(1);
     }
     else if (strcmp(filtro, "laplace") == 0) {
-        imagen.aplicarLaplace();
+        imagen.aplicar(2);
     }
     else if (strcmp(filtro, "sharpen") == 0) {
-        imagen.aplicarSharpening();
+        imagen.aplicar(3);
     }
     if (!imagen.guardarEnArchivo(argv[2])) {
         return 1;

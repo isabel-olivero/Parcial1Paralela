@@ -175,49 +175,24 @@ public:
     }
     
 
-    void aplicarBlur() {
+    void aplicar(int n) {
         int* nuevos_pixels = new int[pixel_count];
-        
-        #pragma omp parallel for collapse(2)
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 for (int c = 0; c < channels; c++) {
                     int index = (y * width + x) * channels + c;
-                    nuevos_pixels[index] = aplicarKernel(x, y, blurKernel, blurDiv, c);
-                }
-            }
-        }
-        
-        delete[] pixels;
-        pixels = nuevos_pixels;
-    }
 
-    void aplicarLaplace() {
-        int* nuevos_pixels = new int[pixel_count];
-        
-        #pragma omp parallel for collapse(2)
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                for (int c = 0; c < channels; c++) {
-                    int index = (y * width + x) * channels + c;
+                    if (n == 1){
+                    nuevos_pixels[index] = aplicarKernel(x, y, blurKernel, blurDiv, c);
+                    }
+                    else if (n == 2){
                     nuevos_pixels[index] = aplicarKernel(x, y, laplaceKernel, laplaceDiv, c);
-                }
-            }
-        }
-        
-        delete[] pixels;
-        pixels = nuevos_pixels;
-    }
-    
-    void aplicarSharpening() {
-        int* nuevos_pixels = new int[pixel_count];
-        
-        #pragma omp parallel for collapse(2)
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                for (int c = 0; c < channels; c++) {
-                    int index = (y * width + x) * channels + c;
+                    }
+
+                    else if (n == 3){
                     nuevos_pixels[index] = aplicarKernel(x, y, sharpenKernel, sharpenDiv, c);
+                    }
+
                 }
             }
         }
@@ -225,6 +200,7 @@ public:
         delete[] pixels;
         pixels = nuevos_pixels;
     }
+   
 };
 
 int main(int argc, char* argv[]) {
@@ -245,7 +221,7 @@ int main(int argc, char* argv[]) {
 {
     #pragma omp section
     {
-        imagen_blur.aplicarBlur();
+        imagen_blur.aplicar(1);
         if (strcmp(imagen_blur.getMagic(), "P3") == 0) {
             imagen_blur.guardarEnArchivo("blur.ppm");
         } else {
@@ -255,7 +231,7 @@ int main(int argc, char* argv[]) {
     
     #pragma omp section
     {
-        imagen_laplace.aplicarLaplace();
+        imagen_laplace.aplicar(2);
         if (strcmp(imagen_laplace.getMagic(), "P3") == 0) {
             imagen_laplace.guardarEnArchivo("laplace.ppm");
         } else {
@@ -265,7 +241,7 @@ int main(int argc, char* argv[]) {
     
     #pragma omp section
     {
-        imagen_sharpen.aplicarSharpening();
+        imagen_sharpen.aplicar(3);
         if (strcmp(imagen_sharpen.getMagic(), "P3") == 0) {
             imagen_sharpen.guardarEnArchivo("sharpen.ppm");
         } else {
