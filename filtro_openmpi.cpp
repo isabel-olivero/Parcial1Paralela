@@ -66,11 +66,24 @@ public:
         }
 
         char magic_buffer[MAX_MAGIC];
-        fscanf(file, "%2s", magic_buffer);
+        if (fscanf(file, "%2s", magic_buffer) != 1) {
+            std::cout << "Error reading magic number." << std::endl;
+            fclose(file);
+            return false;
+        }
         strncpy(magic, magic_buffer, MAX_MAGIC);
         
-        fscanf(file, "%d %d", &width, &height);
-        fscanf(file, "%d", &max_color);
+        if (fscanf(file, "%d %d", &width, &height) != 2) {
+            std::cout << "Error reading width and height." << std::endl;
+            fclose(file);
+            return false;
+        }
+        
+        if (fscanf(file, "%d", &max_color) != 1) {
+            std::cout << "Error reading max color." << std::endl;
+            fclose(file);
+            return false;
+        }
 
         channels = 1;
         pixel_count = width * height;
@@ -84,7 +97,7 @@ public:
         int value;
         for (int i = 0; i < pixel_count; i++) {
             if (fscanf(file, "%d", &value) != 1) {
-                std::cout << "Error reading pixels." << std::endl;
+                std::cout << "Error reading pixels at position " << i << "." << std::endl;
                 liberarMemoria();
                 fclose(file);
                 return false;
@@ -99,14 +112,22 @@ public:
     bool guardarEnArchivo(const char* filename) {
         FILE *output = fopen(filename, "w");
         if (output == NULL) {
-            std::cout << "Error creating output file." << std::endl;
+            std::cout << "Error creating output file: " << filename << std::endl;
             return false;
         }
 
-        fprintf(output, "%s\n%d %d\n%d\n", magic, width, height, max_color);
+        if (fprintf(output, "%s\n%d %d\n%d\n", magic, width, height, max_color) < 0) {
+            std::cout << "Error writing header." << std::endl;
+            fclose(output);
+            return false;
+        }
 
         for (int i = 0; i < pixel_count; i++) {
-            fprintf(output, "%d\n", pixels[i]);
+            if (fprintf(output, "%d\n", pixels[i]) < 0) {
+                std::cout << "Error writing pixels at position " << i << "." << std::endl;
+                fclose(output);
+                return false;
+            }
         }
 
         fclose(output);
@@ -181,7 +202,6 @@ public:
             }
         }
         
-        // FALTABA: Liberar memoria vieja y asignar nueva
         delete[] pixels;
         pixels = nuevos_pixels;
     }
@@ -283,7 +303,10 @@ int main(int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
     if (argc != 4) {
-   
+        if (rank == 0) {
+            std::cout << "Uso: " << argv[0] << " <input_file> <output_file> <filter>" << std::endl;
+            std::cout << "Filtros: blur, laplace, sharpen" << std::endl;
+        }
         MPI_Finalize();
         return 1;
     }
